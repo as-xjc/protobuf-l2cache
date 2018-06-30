@@ -22,32 +22,32 @@ class PbCache {
   virtual ~PbCache();
 
   /**
-   * 获取临时数据
+   * 获取数据
    *
-   * @note 当本地数据未命中，如果设置了redis，会从redis读取，并且放入cache
+   * @note 当本地数据未命中，如果设置了`backend`，会从`backend`读取，并且放入cache
    *
    * @param key 数据的key
    * @return 数据
    */
-  Result Get(boost::string_view key);
+  Result Get(boost::string_view key, bool copy = false);
 
   /**
-   * 插入临时数据，同步到redis
+   * 插入数据，同步到`backend`
    * @param key 数据的key
    * @param data 数据
    */
-  void Set(boost::string_view key, MessagePtr ptr);
+  void Set(boost::string_view key, MessagePtr data);
 
-  /// 删除数据
+  /// 删除数据，会删除`backend`的数据
   void Del(boost::string_view key);
 
-  /// 删除临时数据
+  /// 删除临时数据，只删除`cache`中的数据
   void DelCache(boost::string_view key);
 
   /**
-   * 强制读取数据，不优先读取cache的数据，而是直接读取后端redis数据
+   * 强制读取数据，而是直接读取后端`backend`数据
    * @param key 数据的key
-   * @param cache 是否更新cache中的数据
+   * @param cache 是否更新`cache`中的数据
    * @return 读取到的数据
    */
   Result ForceGet(boost::string_view key, bool cache = true);

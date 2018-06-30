@@ -7,8 +7,10 @@ PbCache::PbCache(const Option& option, std::shared_ptr<BackendIf> e) : option_(o
 PbCache::~PbCache() {}
 
 bool PbCache::pbToString(MessagePtr msg, std::string& cache) {
+  std::string type = msg->GetTypeName();
+  auto length = static_cast<char>(type.size());
+  cache.append(&length, 1);
   cache.append(msg->GetTypeName());
-  cache.append('\0', 1);
 
   return msg->AppendToString(&cache);
 }
@@ -16,12 +18,17 @@ bool PbCache::pbToString(MessagePtr msg, std::string& cache) {
 Result PbCache::stringToPb(const std::string& data) {
   boost::string_view view(data);
 
-  auto pos = view.find_first_of("\0");
-  if (pos == boost::string_view::npos) {
+  char length = 0;
+  if (view.copy(&length, 1) != 1) {
     return Result{nullptr, State::DATA_ERROR};
   }
 
-  auto type = view.substr(0, pos).to_string();
+  view.remove_prefix(1);
+  if (view.size() < length) {
+    return Result{nullptr, State::DATA_ERROR};
+  }
+  auto type = view.substr(0, length).to_string();
+  view.remove_prefix(length);
   auto msgDes = google::protobuf::DescriptorPool::generated_pool()->FindMessageTypeByName(type);
   if (msgDes == nullptr) {
     return Result{nullptr, State::FOUND_NO_MESSAGE_TYPE};
@@ -33,7 +40,6 @@ Result PbCache::stringToPb(const std::string& data) {
   }
 
   MessagePtr ptr(msg->New());
-  view.remove_prefix(type.size() + 1);
   if (ptr->ParseFromArray(view.data(), view.size())) {
     return Result{ptr, State::OK};
   } else {
@@ -41,11 +47,25 @@ Result PbCache::stringToPb(const std::string& data) {
   }
 }
 
-Result PbCache::Get(boost::string_view key) {
+Result PbCache::Get(boost::string_view key, bool copy) {
   auto result = cacheGet(key);
-  if (result.state == State::OK) return result;
+  if (result.state == State::OK) {
+    if (copy) {
+      MessagePtr ptr(result.data->New());
+      ptr->CopyFrom(*result.data);
+      result.data = ptr;
+    }
+    return result;
+  }
 
-  return backendGet(key);
+  result = backendGet(key);
+  if (result.state == State::OK && copy) {
+    MessagePtr ptr(result.data->New());
+    ptr->CopyFrom(*result.data);
+    result.data = ptr;
+  }
+
+  return result;
 }
 
 Result PbCache::ForceGet(boost::string_view key, bool cache) {
