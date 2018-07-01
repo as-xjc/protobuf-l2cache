@@ -10,6 +10,7 @@ int main() {
   std::cout << t->DebugString() << std::endl;
 
   p2cache::Option op;
+  op.useJson = true;
   auto end = std::make_shared<MapBack>();
   p2cache::P2Cache cache(op, end);
 

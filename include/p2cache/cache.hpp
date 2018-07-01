@@ -6,10 +6,10 @@
 #include <ctime>
 #include <boost/utility/string_view.hpp>
 
-#include "backendif.hpp"
-#include "option.hpp"
-#include "state.hpp"
-#include "result.hpp"
+#include "p2cache/backendif.hpp"
+#include "p2cache/option.hpp"
+#include "p2cache/state.hpp"
+#include "p2cache/result.hpp"
 
 namespace p2cache {
 
