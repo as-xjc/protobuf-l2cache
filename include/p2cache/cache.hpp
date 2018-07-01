@@ -52,6 +52,9 @@ class P2Cache {
    */
   Result ForceGet(boost::string_view key, bool cache = true);
 
+  /// 刷新过期，以刷新那刻的时间重新计算超时
+  void RefreshExpired(boost::string_view key);
+
   /**
    * 提供给外部的心跳处理函数，让外面控制频率
    */
