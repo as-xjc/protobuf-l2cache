@@ -12,7 +12,7 @@
 
 ### 数据格式
 
-|<mode>|<type length>|<type name>|<data>|
+| mode | type length | type name | data |
 
 * mode: 1字节。主要标记`data`的内容格式：`B`二进制形式和`J`文本格式(`Json`)
 * type length: 1字节。记录`type name`的长度。
