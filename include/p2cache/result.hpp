@@ -3,7 +3,7 @@
 #include <google/protobuf/message.h>
 #include "state.hpp"
 
-namespace pbcache {
+namespace p2cache {
 
 using MessagePtr = std::shared_ptr<google::protobuf::Message>;
 

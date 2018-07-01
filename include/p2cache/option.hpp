@@ -1,6 +1,6 @@
 #pragma once
 
-namespace pbcache {
+namespace p2cache {
 
 struct Option {
   bool enableCache{true}; /**< 是否启用本地缓存，关闭则每次读写都是直接通过后端进行操作 */
