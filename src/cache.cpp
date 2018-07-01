@@ -189,6 +189,13 @@ void P2Cache::DelCache(boost::string_view key) {
   }
 }
 
+void P2Cache::RefreshExpired(boost::string_view key) {
+  auto it = cache_.find(key.data());
+  if (it == cache_.end()) return;
+
+  it->second->createTime = std::time(nullptr);
+}
+
 void P2Cache::Heartbeat() {
   auto now = std::time(nullptr);
   for (auto it = cache_.begin(); it != cache_.end(); ) {
