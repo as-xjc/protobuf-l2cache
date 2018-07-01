@@ -1,4 +1,5 @@
 #include <p2cache/cache.hpp>
+#include <google/protobuf/util/json_util.h>
 
 namespace p2cache {
 
@@ -8,25 +9,51 @@ P2Cache::~P2Cache() {}
 
 bool P2Cache::pbToString(MessagePtr msg, std::string& cache) {
   std::string type = msg->GetTypeName();
+  char mode = 'B';
+  if (option_.useJson) mode = 'J';
+  cache.append(&mode, 1);
   auto length = static_cast<char>(type.size());
   cache.append(&length, 1);
   cache.append(msg->GetTypeName());
 
-  return msg->AppendToString(&cache);
+  bool result = true;
+  if (option_.useJson) {
+    std::string json;
+    google::protobuf::util::Status state = google::protobuf::util::MessageToJsonString(*msg, &json);
+    if (state.ok()) {
+      result = true;
+      cache.append(json);
+    } else {
+      result = false;
+    }
+  } else {
+    result = msg->AppendToString(&cache);
+  }
+  return result;
 }
 
 Result P2Cache::stringToPb(const std::string& data) {
   boost::string_view view(data);
+  if (view.size() < 2) {
+    return Result{nullptr, State::DATA_ERROR};
+  }
+
+  char mode = 'B';
+  if (view.copy(&mode, 1) != 1) {
+    return Result{nullptr, State::DATA_ERROR};
+  }
+  view.remove_prefix(1);
 
   char length = 0;
   if (view.copy(&length, 1) != 1) {
     return Result{nullptr, State::DATA_ERROR};
   }
-
   view.remove_prefix(1);
+
   if (view.size() < length) {
     return Result{nullptr, State::DATA_ERROR};
   }
+
   auto type = view.substr(0, length).to_string();
   view.remove_prefix(length);
   auto msgDes = google::protobuf::DescriptorPool::generated_pool()->FindMessageTypeByName(type);
@@ -40,11 +67,24 @@ Result P2Cache::stringToPb(const std::string& data) {
   }
 
   MessagePtr ptr(msg->New());
-  if (ptr->ParseFromArray(view.data(), view.size())) {
-    return Result{ptr, State::OK};
-  } else {
-    return Result{nullptr, State::PARSE_ERROR};
+
+  if (mode == 'B') {
+    if (ptr->ParseFromArray(view.data(), view.size())) {
+      return Result{ptr, State::OK};
+    } else {
+      return Result{nullptr, State::PARSE_ERROR};
+    }
+  } else if (mode == 'J') {
+    std::string json = view.to_string();
+    google::protobuf::util::Status state = google::protobuf::util::JsonStringToMessage(json, ptr.get());
+    if (state.ok()) {
+      return Result{ptr, State::OK};
+    } else {
+      return Result{nullptr, State::PARSE_ERROR};
+    }
   }
+
+  return Result{nullptr, State::PARSE_ERROR};
 }
 
 Result P2Cache::Get(boost::string_view key, bool copy) {
