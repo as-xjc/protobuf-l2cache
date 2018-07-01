@@ -198,6 +198,8 @@ void P2Cache::Heartbeat() {
       ++it;
     }
   }
+
+  if (backend_) backend_->Heartbeat();
 }
 
 }
