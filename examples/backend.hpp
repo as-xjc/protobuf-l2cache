@@ -4,7 +4,7 @@
 #include "backend.hpp"
 #include <iostream>
 
-class MapBack : public pbcache::BackendIf {
+class MapBack : public p2cache::BackendIf {
  public:
   MapBack() {}
   ~MapBack() {}

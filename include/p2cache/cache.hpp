@@ -11,15 +11,15 @@
 #include "state.hpp"
 #include "result.hpp"
 
-namespace pbcache {
+namespace p2cache {
 
 /**
  * 2级 protobuf 缓冲
  */
-class PbCache {
+class P2Cache {
  public:
-  PbCache(const Option& option, std::shared_ptr<BackendIf> e);
-  virtual ~PbCache();
+  P2Cache(const Option& option, std::shared_ptr<BackendIf> e);
+  virtual ~P2Cache();
 
   /**
    * 获取数据

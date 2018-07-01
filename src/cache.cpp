@@ -1,12 +1,12 @@
-#include "cache.hpp"
+#include <p2cache/cache.hpp>
 
-namespace pbcache {
+namespace p2cache {
 
-PbCache::PbCache(const Option& option, std::shared_ptr<BackendIf> e) : option_(option), backend_(e) {}
+P2Cache::P2Cache(const Option& option, std::shared_ptr<BackendIf> e) : option_(option), backend_(e) {}
 
-PbCache::~PbCache() {}
+P2Cache::~P2Cache() {}
 
-bool PbCache::pbToString(MessagePtr msg, std::string& cache) {
+bool P2Cache::pbToString(MessagePtr msg, std::string& cache) {
   std::string type = msg->GetTypeName();
   auto length = static_cast<char>(type.size());
   cache.append(&length, 1);
@@ -15,7 +15,7 @@ bool PbCache::pbToString(MessagePtr msg, std::string& cache) {
   return msg->AppendToString(&cache);
 }
 
-Result PbCache::stringToPb(const std::string& data) {
+Result P2Cache::stringToPb(const std::string& data) {
   boost::string_view view(data);
 
   char length = 0;
@@ -47,7 +47,7 @@ Result PbCache::stringToPb(const std::string& data) {
   }
 }
 
-Result PbCache::Get(boost::string_view key, bool copy) {
+Result P2Cache::Get(boost::string_view key, bool copy) {
   auto result = cacheGet(key);
   if (result.state == State::OK) {
     if (copy) {
@@ -68,7 +68,7 @@ Result PbCache::Get(boost::string_view key, bool copy) {
   return result;
 }
 
-Result PbCache::ForceGet(boost::string_view key, bool cache) {
+Result P2Cache::ForceGet(boost::string_view key, bool cache) {
   auto result = backendGet(key);
   if (result.state != State::OK) return result;
 
@@ -88,7 +88,7 @@ Result PbCache::ForceGet(boost::string_view key, bool cache) {
   return result;
 }
 
-void PbCache::Set(boost::string_view key, MessagePtr ptr) {
+void P2Cache::Set(boost::string_view key, MessagePtr ptr) {
   if (option_.enableCache) {
     auto it = cache_.find(key.data());
     if (it != cache_.end()) {
@@ -109,7 +109,7 @@ void PbCache::Set(boost::string_view key, MessagePtr ptr) {
   }
 }
 
-Result PbCache::cacheGet(boost::string_view key) {
+Result P2Cache::cacheGet(boost::string_view key) {
   if (!option_.enableCache) return Result{nullptr, State::EMPTY};
 
   auto it = cache_.find(key.data());
@@ -124,7 +124,7 @@ Result PbCache::cacheGet(boost::string_view key) {
   return Result{it->second->data, State::OK};
 }
 
-Result PbCache::backendGet(boost::string_view key) {
+Result P2Cache::backendGet(boost::string_view key) {
   if (!backend_) return Result{nullptr, State::NO_BACKEND};
 
   auto reply = backend_->Get(key);
@@ -133,7 +133,7 @@ Result PbCache::backendGet(boost::string_view key) {
   return stringToPb(reply);
 }
 
-void PbCache::Del(boost::string_view key) {
+void P2Cache::Del(boost::string_view key) {
   if (option_.enableCache) {
     cache_.erase(key.data());
   }
@@ -143,13 +143,13 @@ void PbCache::Del(boost::string_view key) {
   }
 }
 
-void PbCache::DelCache(boost::string_view key) {
+void P2Cache::DelCache(boost::string_view key) {
   if (option_.enableCache) {
     cache_.erase(key.data());
   }
 }
 
-void PbCache::Heartbeat() {
+void P2Cache::Heartbeat() {
   auto now = std::time(nullptr);
   for (auto it = cache_.begin(); it != cache_.end(); ) {
     if (now - it->second->createTime >= it->second->expired) {

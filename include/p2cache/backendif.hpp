@@ -2,14 +2,14 @@
 
 #include <boost/utility/string_view.hpp>
 
-namespace pbcache {
+namespace p2cache {
 
 class BackendIf {
  public:
   /**
  * 获取临时数据
  *
- * @note 当本地数据未命中，如果设置了redis，会从redis读取，并且放入cache，数据过期时间默认为10秒
+ * @note 当本地数据未命中，如果设置了`backend`，会从`backend`读取，并且放入`cache`
  *
  * @param key 数据的key
  * @return 数据
@@ -17,7 +17,7 @@ class BackendIf {
   virtual std::string Get(boost::string_view key) = 0;
 
   /**
-   * 插入临时数据，同步到redis
+   * 插入临时数据，同步到`backend`
    * @param key 数据的key
    * @param data 数据
    */

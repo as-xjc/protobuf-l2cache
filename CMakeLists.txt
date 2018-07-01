@@ -14,6 +14,7 @@ endif ()
 include_directories(
         ${BOOST_DIR}/include
         ${PROTOBUF_DIR}/include
+        ${PROJECT_SOURCE_DIR}/include
 )
 
 link_directories(

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace pbcache {
+namespace p2cache {
 
 enum class State {
   OK,

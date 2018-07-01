@@ -1,5 +1,5 @@
 #include "test.pb.h"
-#include "cache.hpp"
+#include "p2cache/cache.hpp"
 #include "backend.hpp"
 
 int main() {
@@ -9,13 +9,13 @@ int main() {
 
   std::cout << t->DebugString() << std::endl;
 
-  pbcache::Option op;
+  p2cache::Option op;
   auto end = std::make_shared<MapBack>();
-  pbcache::PbCache cache(op, end);
+  p2cache::P2Cache cache(op, end);
 
   cache.Set("test", t);
 
-  pbcache::Result result = cache.Get("test", true);
+  p2cache::Result result = cache.Get("test", true);
   std::cout <<"1:" <<result.Get<test>()->DebugString() << std::endl;
   auto p = result.Get<test>();
   p->set_id(2);
