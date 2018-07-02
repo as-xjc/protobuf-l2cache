@@ -12,9 +12,9 @@ if (NOT PROTOBUF_DIR)
 endif ()
 
 include_directories(
+        ${PROJECT_SOURCE_DIR}/include
         ${BOOST_DIR}/include
         ${PROTOBUF_DIR}/include
-        ${PROJECT_SOURCE_DIR}/include
 )
 
 link_directories(
