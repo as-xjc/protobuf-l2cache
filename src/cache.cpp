@@ -209,4 +209,17 @@ void P2Cache::Heartbeat() {
   if (backend_) backend_->Heartbeat();
 }
 
+bool P2Cache::InCache(boost::string_view key) {
+  auto it = cache_.find(key.data());
+  if (it == cache_.end()) return false;
+
+  auto now = std::time(nullptr);
+  if (now - it->second->createTime >= it->second->expired) {
+    cache_.erase(it);
+    return false;
+  }
+
+  return true;
+}
+
 }

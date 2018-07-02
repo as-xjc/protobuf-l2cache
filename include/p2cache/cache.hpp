@@ -38,6 +38,9 @@ class P2Cache {
    */
   void Set(boost::string_view key, MessagePtr data);
 
+  /// 判断缓存中是否有数据
+  bool InCache(boost::string_view key);
+
   /// 删除数据，会删除`backend`的数据
   void Del(boost::string_view key);
 
