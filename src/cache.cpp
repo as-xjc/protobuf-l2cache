@@ -101,7 +101,7 @@ Result P2Cache::Get(boost::string_view key, bool copy) {
   auto result = l1cache_->Get(key);
 
   if (!result.Ok()) {
-    result = backendGet(key);
+    result = ForceGet(key, true);
   }
 
   if (result.state == State::OK && copy) {
