@@ -6,10 +6,11 @@
 #include <ctime>
 #include <boost/utility/string_view.hpp>
 
-#include "p2cache/backendif.hpp"
-#include "p2cache/option.hpp"
-#include "p2cache/state.hpp"
-#include "p2cache/result.hpp"
+#include <p2cache/backendif.hpp>
+#include <p2cache/option.hpp>
+#include <p2cache/define.hpp>
+#include <p2cache/result.hpp>
+#include <p2cache/l1cacheif.hpp>
 
 namespace p2cache {
 
@@ -18,7 +19,8 @@ namespace p2cache {
  */
 class P2Cache {
  public:
-  P2Cache(const Option& option, std::shared_ptr<BackendIf> e);
+  P2Cache(const Option& option, std::unique_ptr<L1CacheIf> l1, std::unique_ptr<BackendIf> e);
+  P2Cache(const Option& option, std::unique_ptr<BackendIf> e);
   virtual ~P2Cache();
 
   /**
@@ -67,18 +69,12 @@ class P2Cache {
   bool pbToString(MessagePtr, std::string& cache);
   Result stringToPb(const std::string& data);
 
-  Result cacheGet(boost::string_view key);
   Result backendGet(boost::string_view key);
 
-  struct DataInfo {
-    MessagePtr data;
-    std::time_t createTime{0};
-    uint32_t expired{0};
-  };
-  std::map<std::string, std::shared_ptr<DataInfo>> cache_;
   Option option_;
 
-  std::shared_ptr<BackendIf> backend_;
+  std::unique_ptr<L1CacheIf> l1cache_;
+  std::unique_ptr<BackendIf> backend_;
 };
 
 }

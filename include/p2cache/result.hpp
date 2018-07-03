@@ -1,11 +1,8 @@
 #pragma once
 
-#include <google/protobuf/message.h>
-#include "state.hpp"
+#include <p2cache/define.hpp>
 
 namespace p2cache {
-
-using MessagePtr = std::shared_ptr<google::protobuf::Message>;
 
 struct Result {
   MessagePtr data;

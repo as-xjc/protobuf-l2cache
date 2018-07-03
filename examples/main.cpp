@@ -11,8 +11,7 @@ int main() {
 
   p2cache::Option op;
   op.useJson = true;
-  auto end = std::make_shared<MapBack>();
-  p2cache::P2Cache cache(op, end);
+  p2cache::P2Cache cache(op, std::unique_ptr<p2cache::BackendIf>(new MapBack));
 
   cache.Set("test", t);
 

@@ -1,9 +1,19 @@
 #include <p2cache/cache.hpp>
 #include <google/protobuf/util/json_util.h>
+#include <p2cache/generall1cache.hpp>
 
 namespace p2cache {
 
-P2Cache::P2Cache(const Option& option, std::shared_ptr<BackendIf> e) : option_(option), backend_(e) {}
+P2Cache::P2Cache(const Option& option, std::unique_ptr<L1CacheIf> l1, std::unique_ptr<BackendIf> e) : option_(option) {
+  l1cache_ = std::move(l1);
+  backend_ = std::move(e);
+}
+
+P2Cache::P2Cache(const Option& option, std::unique_ptr<BackendIf> e) : option_(option) {
+  l1cache_.reset(new GeneralL1Cache());
+  l1cache_->SetDefaultExpire(option_.defaultExpire);
+  backend_ = std::move(e);
+}
 
 P2Cache::~P2Cache() {}
 
@@ -88,17 +98,12 @@ Result P2Cache::stringToPb(const std::string& data) {
 }
 
 Result P2Cache::Get(boost::string_view key, bool copy) {
-  auto result = cacheGet(key);
-  if (result.state == State::OK) {
-    if (copy) {
-      MessagePtr ptr(result.data->New());
-      ptr->CopyFrom(*result.data);
-      result.data = ptr;
-    }
-    return result;
+  auto result = l1cache_->Get(key);
+
+  if (!result.Ok()) {
+    result = backendGet(key);
   }
 
-  result = backendGet(key);
   if (result.state == State::OK && copy) {
     MessagePtr ptr(result.data->New());
     ptr->CopyFrom(*result.data);
@@ -110,19 +115,10 @@ Result P2Cache::Get(boost::string_view key, bool copy) {
 
 Result P2Cache::ForceGet(boost::string_view key, bool cache) {
   auto result = backendGet(key);
-  if (result.state != State::OK) return result;
+  if (!result.Ok()) return result;
 
   if (option_.enableCache && cache) {
-    auto it = cache_.find(key.data());
-    if (it != cache_.end()) {
-      it->second->data = result.data;
-    } else {
-      auto info = std::make_shared<DataInfo>();
-      info->data = result.data;
-      info->expired = option_.defaultExpire;
-      info->createTime = std::time(nullptr);
-      cache_.emplace(key.to_string(), info);
-    }
+    l1cache_->Set(key, result.data);
   }
 
   return result;
@@ -130,38 +126,12 @@ Result P2Cache::ForceGet(boost::string_view key, bool cache) {
 
 void P2Cache::Set(boost::string_view key, MessagePtr ptr) {
   if (option_.enableCache) {
-    auto it = cache_.find(key.data());
-    if (it != cache_.end()) {
-      it->second->data = ptr;
-    } else {
-      auto info = std::make_shared<DataInfo>();
-      info->data = ptr;
-      info->expired = option_.defaultExpire;
-      info->createTime = std::time(nullptr);
-      cache_.emplace(key.to_string(), info);
-    }
+    l1cache_->Set(key, ptr);
   }
 
-  if (backend_) {
-    std::string data;
-    pbToString(ptr, data);
-    backend_->Set(key, data);
-  }
-}
-
-Result P2Cache::cacheGet(boost::string_view key) {
-  if (!option_.enableCache) return Result{nullptr, State::EMPTY};
-
-  auto it = cache_.find(key.data());
-  if (it == cache_.end()) return Result{nullptr, State::EMPTY};
-
-  auto now = std::time(nullptr);
-  if (now - it->second->createTime >= it->second->expired) {
-    cache_.erase(it);
-    return Result{nullptr, State::EMPTY};
-  }
-
-  return Result{it->second->data, State::OK};
+  std::string data;
+  pbToString(ptr, data);
+  backend_->Set(key, data);
 }
 
 Result P2Cache::backendGet(boost::string_view key) {
@@ -174,52 +144,28 @@ Result P2Cache::backendGet(boost::string_view key) {
 }
 
 void P2Cache::Del(boost::string_view key) {
-  if (option_.enableCache) {
-    cache_.erase(key.data());
-  }
-
-  if (backend_) {
-    backend_->Del(key);
-  }
+  l1cache_->Del(key);
+  backend_->Del(key);
 }
 
 void P2Cache::DelCache(boost::string_view key) {
-  if (option_.enableCache) {
-    cache_.erase(key.data());
-  }
+  l1cache_->Del(key);
 }
 
 void P2Cache::RefreshExpired(boost::string_view key) {
-  auto it = cache_.find(key.data());
-  if (it == cache_.end()) return;
-
-  it->second->createTime = std::time(nullptr);
+  l1cache_->RefreshExpired(key);
 }
 
 void P2Cache::Heartbeat() {
-  auto now = std::time(nullptr);
-  for (auto it = cache_.begin(); it != cache_.end(); ) {
-    if (now - it->second->createTime >= it->second->expired) {
-      it = cache_.erase(it);
-    } else {
-      ++it;
-    }
-  }
+  l1cache_->Heartbeat();
 
   if (backend_) backend_->Heartbeat();
 }
 
 bool P2Cache::InCache(boost::string_view key) {
-  auto it = cache_.find(key.data());
-  if (it == cache_.end()) return false;
+  auto result = l1cache_->Get(key);
 
-  auto now = std::time(nullptr);
-  if (now - it->second->createTime >= it->second->expired) {
-    cache_.erase(it);
-    return false;
-  }
-
-  return true;
+  return result.Ok();
 }
 
 }

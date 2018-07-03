@@ -1,6 +1,10 @@
 #pragma once
 
+#include <google/protobuf/message.h>
+
 namespace p2cache {
+
+using MessagePtr = std::shared_ptr<google::protobuf::Message>;
 
 enum class State {
   OK,
