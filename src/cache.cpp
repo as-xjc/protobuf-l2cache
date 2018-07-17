@@ -15,6 +15,11 @@ P2Cache::P2Cache(const Option& option, std::unique_ptr<BackendIf> e) : option_(o
   backend_ = std::move(e);
 }
 
+P2Cache::P2Cache(const p2cache::Option& option) : option_(option) {
+  l1cache_.reset(new GeneralL1Cache());
+  l1cache_->SetDefaultExpire(option_.defaultExpire);
+}
+
 P2Cache::~P2Cache() {}
 
 bool P2Cache::pbToString(MessagePtr msg, std::string& cache) {
@@ -129,9 +134,11 @@ void P2Cache::Set(boost::string_view key, MessagePtr ptr) {
     l1cache_->Set(key, ptr);
   }
 
-  std::string data;
-  pbToString(ptr, data);
-  backend_->Set(key, data);
+  if (backend_) {
+    std::string data;
+    pbToString(ptr, data);
+    backend_->Set(key, data);
+  }
 }
 
 Result P2Cache::backendGet(boost::string_view key) {
@@ -145,7 +152,7 @@ Result P2Cache::backendGet(boost::string_view key) {
 
 void P2Cache::Del(boost::string_view key) {
   l1cache_->Del(key);
-  backend_->Del(key);
+  if (backend_) backend_->Del(key);
 }
 
 void P2Cache::DelCache(boost::string_view key) {
