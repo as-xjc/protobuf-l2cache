@@ -23,13 +23,13 @@ P2Cache::P2Cache(const p2cache::Option& option) : option_(option) {
 P2Cache::~P2Cache() {}
 
 bool P2Cache::pbToString(MessagePtr msg, std::string& cache) {
-  std::string type = msg->GetTypeName();
+  const std::string type = msg->GetTypeName();
   char mode = 'B';
   if (option_.useJson) mode = 'J';
   cache.append(&mode, 1);
   auto length = static_cast<char>(type.size());
   cache.append(&length, 1);
-  cache.append(msg->GetTypeName());
+  cache.append(type);
 
   bool result = true;
   if (option_.useJson) {

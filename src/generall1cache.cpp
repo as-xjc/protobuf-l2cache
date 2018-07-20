@@ -7,7 +7,7 @@ GeneralL1Cache::GeneralL1Cache() {}
 GeneralL1Cache::~GeneralL1Cache() {}
 
 Result GeneralL1Cache::Get(boost::string_view key) {
-  auto it = cache_.find(key.data());
+  auto it = cache_.find(key.to_string());
   if (it == cache_.end()) return Result{nullptr, State::EMPTY};
 
   auto now = std::time(nullptr);
@@ -20,7 +20,8 @@ Result GeneralL1Cache::Get(boost::string_view key) {
 }
 
 void GeneralL1Cache::Set(boost::string_view key, MessagePtr data, int expire) {
-  auto it = cache_.find(key.data());
+  std::string keystr = key.to_string();
+  auto it = cache_.find(keystr);
   if (it != cache_.end()) {
     it->second->data = data;
   } else {
@@ -28,7 +29,7 @@ void GeneralL1Cache::Set(boost::string_view key, MessagePtr data, int expire) {
     info->data = data;
     info->expired = expire;
     info->createTime = std::time(nullptr);
-    cache_.emplace(key.to_string(), info);
+    cache_.emplace(std::move(keystr), info);
   }
 }
 
@@ -37,11 +38,11 @@ void GeneralL1Cache::Set(boost::string_view key, MessagePtr data) {
 }
 
 void GeneralL1Cache::Del(boost::string_view key) {
-  cache_.erase(key.data());
+  cache_.erase(key.to_string());
 }
 
 void GeneralL1Cache::RefreshExpired(boost::string_view key) {
-  auto it = cache_.find(key.data());
+  auto it = cache_.find(key.to_string());
   if (it == cache_.end()) return;
 
   it->second->createTime = std::time(nullptr);
