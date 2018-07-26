@@ -4,7 +4,6 @@
 #include <string>
 #include <memory>
 #include <ctime>
-#include <boost/utility/string_view.hpp>
 
 #include <p2cache/backendif.hpp>
 #include <p2cache/option.hpp>
@@ -32,23 +31,23 @@ class P2Cache {
    * @param key 数据的key
    * @return 数据
    */
-  Result Get(boost::string_view key, bool copy = false);
+  Result Get(const std::string& key, bool copy = false);
 
   /**
    * 插入数据，同步到`backend`
    * @param key 数据的key
    * @param data 数据
    */
-  void Set(boost::string_view key, MessagePtr data);
+  void Set(const std::string& key, MessagePtr data);
 
   /// 判断缓存中是否有数据
-  bool InCache(boost::string_view key);
+  bool InCache(const std::string& key);
 
   /// 删除数据，会删除`backend`的数据
-  void Del(boost::string_view key);
+  void Del(const std::string& key);
 
   /// 删除临时数据，只删除`cache`中的数据
-  void DelCache(boost::string_view key);
+  void DelCache(const std::string& key);
 
   /**
    * 强制读取数据，而是直接读取后端`backend`数据
@@ -56,10 +55,10 @@ class P2Cache {
    * @param cache 是否更新`cache`中的数据
    * @return 读取到的数据
    */
-  Result ForceGet(boost::string_view key, bool cache = true);
+  Result ForceGet(const std::string& key, bool cache = true);
 
   /// 刷新过期，以刷新那刻的时间重新计算超时
-  void RefreshExpired(boost::string_view key);
+  void RefreshExpired(const std::string& key);
 
   /**
    * 提供给外部的心跳处理函数，让外面控制频率
@@ -70,7 +69,7 @@ class P2Cache {
   bool pbToString(MessagePtr, std::string& cache);
   Result stringToPb(const std::string& data);
 
-  Result backendGet(boost::string_view key);
+  Result backendGet(const std::string& key);
 
   Option option_;
 

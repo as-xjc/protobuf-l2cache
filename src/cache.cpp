@@ -1,4 +1,5 @@
 #include <p2cache/cache.hpp>
+#include <boost/utility/string_view.hpp>
 #include <google/protobuf/util/json_util.h>
 #include <p2cache/generall1cache.hpp>
 
@@ -102,7 +103,7 @@ Result P2Cache::stringToPb(const std::string& data) {
   return Result{nullptr, State::PARSE_ERROR};
 }
 
-Result P2Cache::Get(boost::string_view key, bool copy) {
+Result P2Cache::Get(const std::string& key, bool copy) {
   auto result = l1cache_->Get(key);
 
   if (!result.Ok()) {
@@ -118,7 +119,7 @@ Result P2Cache::Get(boost::string_view key, bool copy) {
   return result;
 }
 
-Result P2Cache::ForceGet(boost::string_view key, bool cache) {
+Result P2Cache::ForceGet(const std::string& key, bool cache) {
   auto result = backendGet(key);
   if (!result.Ok()) return result;
 
@@ -129,7 +130,7 @@ Result P2Cache::ForceGet(boost::string_view key, bool cache) {
   return result;
 }
 
-void P2Cache::Set(boost::string_view key, MessagePtr ptr) {
+void P2Cache::Set(const std::string& key, MessagePtr ptr) {
   if (option_.enableCache) {
     l1cache_->Set(key, ptr);
   }
@@ -141,7 +142,7 @@ void P2Cache::Set(boost::string_view key, MessagePtr ptr) {
   }
 }
 
-Result P2Cache::backendGet(boost::string_view key) {
+Result P2Cache::backendGet(const std::string& key) {
   if (!backend_) return Result{nullptr, State::NO_BACKEND};
 
   auto reply = backend_->Get(key);
@@ -150,16 +151,16 @@ Result P2Cache::backendGet(boost::string_view key) {
   return stringToPb(reply);
 }
 
-void P2Cache::Del(boost::string_view key) {
+void P2Cache::Del(const std::string& key) {
   l1cache_->Del(key);
   if (backend_) backend_->Del(key);
 }
 
-void P2Cache::DelCache(boost::string_view key) {
+void P2Cache::DelCache(const std::string& key) {
   l1cache_->Del(key);
 }
 
-void P2Cache::RefreshExpired(boost::string_view key) {
+void P2Cache::RefreshExpired(const std::string& key) {
   l1cache_->RefreshExpired(key);
 }
 
@@ -169,7 +170,7 @@ void P2Cache::Heartbeat() {
   if (backend_) backend_->Heartbeat();
 }
 
-bool P2Cache::InCache(boost::string_view key) {
+bool P2Cache::InCache(const std::string& key) {
   auto result = l1cache_->Get(key);
 
   return result.Ok();

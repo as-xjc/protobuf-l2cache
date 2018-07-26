@@ -9,11 +9,11 @@ class GeneralL1Cache : public L1CacheIf {
   GeneralL1Cache();
   virtual ~GeneralL1Cache();
 
-  Result Get(boost::string_view key) override;
-  void Set(boost::string_view key, MessagePtr data, int expire) override;
-  void Set(boost::string_view key, MessagePtr data) override;
-  void Del(boost::string_view key) override;
-  void RefreshExpired(boost::string_view key) override;
+  Result Get(const std::string& key) override;
+  void Set(const std::string& key, MessagePtr data, int expire) override;
+  void Set(const std::string& key, MessagePtr data) override;
+  void Del(const std::string& key) override;
+  void RefreshExpired(const std::string& key) override;
   void Heartbeat() override;
 
  protected:

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <boost/utility/string_view.hpp>
+#include <string>
 
 namespace p2cache {
 
@@ -14,17 +14,17 @@ class BackendIf {
  * @param key 数据的key
  * @return 数据
  */
-  virtual std::string Get(boost::string_view key) = 0;
+  virtual std::string Get(const std::string& key) = 0;
 
   /**
    * 插入临时数据，同步到`backend`
    * @param key 数据的key
    * @param data 数据
    */
-  virtual void Set(boost::string_view key, boost::string_view data) = 0;
+  virtual void Set(const std::string& key, const std::string& data) = 0;
 
   /// 删除临时数据
-  virtual void Del(boost::string_view key) = 0;
+  virtual void Del(const std::string& key) = 0;
 
   /// 心跳，用于驱动后端检测等事件
   virtual void Heartbeat() = 0;

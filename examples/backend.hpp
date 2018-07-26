@@ -9,20 +9,21 @@ class MapBack : public p2cache::BackendIf {
   MapBack() {}
   ~MapBack() {}
 
-  std::string Get(boost::string_view key) override {
-    auto it = data_.find(key.data());
+  std::string Get(const std::string& key) override {
+    auto it = data_.find(key);
     if (it == data_.end()) return "";
 
     return it->second;
   }
-  void Set(boost::string_view key, boost::string_view data) override {
-    data_[key.to_string()] = data.to_string();
-    std::cout << "<backend> key:" << key.to_string() << std::endl;
-    std::cout << "<backend> data:" << data.to_string() << std::endl;
+  void Set(const std::string& key, const std::string& data) override {
+    data_[key] = data;
+    std::cout << "<backend> key:" << key << std::endl;
+    std::cout << "<backend> data:" << data << std::endl;
     std::cout << "<backend> length:" << data.size() << std::endl;
   }
-  void Del(boost::string_view key) override {
-    data_.erase(key.to_string());
+
+  void Del(const std::string& key) override {
+    data_.erase(key);
   }
 
   void Heartbeat() override {
