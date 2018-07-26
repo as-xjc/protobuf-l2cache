@@ -3,6 +3,11 @@
 #include <google/protobuf/util/json_util.h>
 #include <p2cache/generall1cache.hpp>
 
+namespace {
+const char DATA_TYPE_JSON = 'J';
+const char DATA_TYPE_BINARY = 'B';
+}
+
 namespace p2cache {
 
 P2Cache::P2Cache(const Option& option, std::unique_ptr<L1CacheIf> l1, std::unique_ptr<BackendIf> e) : option_(option) {
@@ -23,29 +28,30 @@ P2Cache::P2Cache(const p2cache::Option& option) : option_(option) {
 
 P2Cache::~P2Cache() {}
 
-bool P2Cache::pbToString(MessagePtr msg, std::string& cache) {
+std::string P2Cache::pbToString(MessagePtr& msg) {
+  std::string cache;
   const std::string type = msg->GetTypeName();
-  char mode = 'B';
-  if (option_.useJson) mode = 'J';
+
+  char mode = DATA_TYPE_BINARY;
+  if (option_.useJson) mode = DATA_TYPE_JSON;
   cache.append(&mode, 1);
+
   auto length = static_cast<char>(type.size());
   cache.append(&length, 1);
   cache.append(type);
 
-  bool result = true;
   if (option_.useJson) {
     std::string json;
-    google::protobuf::util::Status state = google::protobuf::util::MessageToJsonString(*msg, &json);
+    auto state = google::protobuf::util::MessageToJsonString(*msg, &json);
     if (state.ok()) {
-      result = true;
       cache.append(json);
+      return cache;
     } else {
-      result = false;
+      return "";
     }
   } else {
-    result = msg->AppendToString(&cache);
+    return msg->AppendToString(&cache) ? cache : "";
   }
-  return result;
 }
 
 Result P2Cache::stringToPb(const std::string& data) {
@@ -54,7 +60,7 @@ Result P2Cache::stringToPb(const std::string& data) {
     return Result{nullptr, State::DATA_ERROR};
   }
 
-  char mode = 'B';
+  char mode = DATA_TYPE_BINARY;
   if (view.copy(&mode, 1) != 1) {
     return Result{nullptr, State::DATA_ERROR};
   }
@@ -84,13 +90,13 @@ Result P2Cache::stringToPb(const std::string& data) {
 
   MessagePtr ptr(msg->New());
 
-  if (mode == 'B') {
+  if (mode == DATA_TYPE_BINARY) {
     if (ptr->ParseFromArray(view.data(), view.size())) {
       return Result{ptr, State::OK};
     } else {
       return Result{nullptr, State::PARSE_ERROR};
     }
-  } else if (mode == 'J') {
+  } else if (mode == DATA_TYPE_JSON) {
     std::string json = view.to_string();
     google::protobuf::util::Status state = google::protobuf::util::JsonStringToMessage(json, ptr.get());
     if (state.ok()) {
@@ -136,9 +142,10 @@ void P2Cache::Set(const std::string& key, MessagePtr ptr) {
   }
 
   if (backend_) {
-    std::string data;
-    pbToString(ptr, data);
-    backend_->Set(key, data);
+    std::string data = pbToString(ptr);
+    if (!data.empty()) {
+      backend_->Set(key, data);
+    }
   }
 }
 

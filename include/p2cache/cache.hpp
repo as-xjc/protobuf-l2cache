@@ -66,7 +66,7 @@ class P2Cache {
   void Heartbeat();
 
  private:
-  bool pbToString(MessagePtr, std::string& cache);
+  std::string pbToString(MessagePtr&);
   Result stringToPb(const std::string& data);
 
   Result backendGet(const std::string& key);
