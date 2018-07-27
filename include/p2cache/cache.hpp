@@ -60,10 +60,14 @@ class P2Cache {
   /// 刷新过期，以刷新那刻的时间重新计算超时
   void RefreshExpired(const std::string& key);
 
-  /**
-   * 提供给外部的心跳处理函数，让外面控制频率
-   */
+  /// 提供给外部的心跳处理函数，让外面控制频率
   void Heartbeat();
+
+  /// 添加类型过滤器，处理从L2层回来的数据
+  void AddTypeFilter(const std::string& type, TypeFilter filter);
+
+  /// 移除类型过滤器
+  void DelTypeFilter(const std::string& type);
 
  private:
   std::string pbToString(MessagePtr&);
@@ -75,6 +79,8 @@ class P2Cache {
 
   std::unique_ptr<L1CacheIf> l1cache_;
   std::unique_ptr<BackendIf> backend_;
+
+  std::map<std::string, TypeFilter> typefilters_;
 };
 
 }

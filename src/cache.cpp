@@ -155,7 +155,16 @@ Result P2Cache::backendGet(const std::string& key) {
   auto reply = backend_->Get(key);
   if (reply.empty()) return Result{nullptr, State::EMPTY};
 
-  return stringToPb(reply);
+  auto ptr = stringToPb(reply);
+  if (!ptr.Ok()) return ptr;
+
+  const std::string type = ptr.data->GetTypeName();
+  const auto it = typefilters_.find(type);
+  if (it != typefilters_.end() && !it->second(ptr.data)) {
+    return Result{nullptr, State::EMPTY};
+  }
+
+  return ptr;
 }
 
 void P2Cache::Del(const std::string& key) {
@@ -181,6 +190,14 @@ bool P2Cache::InCache(const std::string& key) {
   auto result = l1cache_->Get(key);
 
   return result.Ok();
+}
+
+void P2Cache::AddTypeFilter(const std::string& type, TypeFilter filter) {
+  typefilters_.emplace(type, std::move(filter));
+}
+
+void P2Cache::DelTypeFilter(const std::string& type) {
+  typefilters_.erase(type);
 }
 
 }

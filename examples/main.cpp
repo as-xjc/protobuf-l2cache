@@ -13,6 +13,10 @@ int main() {
   op.useJson = true;
   p2cache::P2Cache cache(op, std::unique_ptr<p2cache::BackendIf>(new MapBack));
 
+  cache.AddTypeFilter(test::default_instance().GetTypeName(), [](p2cache::MessagePtr& ptr) {
+    std::cout << "filer-----------:" << ptr->DebugString() << std::endl;
+    return true;
+  });
   cache.Set("test", t);
 
   p2cache::Result result = cache.Get("test", true);
@@ -21,7 +25,6 @@ int main() {
   p->set_id(2);
   cache.DelCache("test");
   std::cout <<"2:" <<cache.Get("test", true).Get<test>()->DebugString() << std::endl;
-
 
   return 0;
 }

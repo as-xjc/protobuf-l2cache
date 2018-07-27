@@ -6,6 +6,8 @@ namespace p2cache {
 
 using MessagePtr = std::shared_ptr<google::protobuf::Message>;
 
+using TypeFilter = std::function<bool(MessagePtr&)>;
+
 enum class State {
   OK,
   EMPTY,
