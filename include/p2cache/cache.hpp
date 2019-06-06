@@ -21,7 +21,7 @@ class P2Cache {
   P2Cache(const Option& option, std::unique_ptr<L1CacheIf> l1, std::unique_ptr<BackendIf> e);
   P2Cache(const Option& option, std::unique_ptr<BackendIf> e);
   P2Cache(const Option& option);
-  virtual ~P2Cache();
+  virtual ~P2Cache() = default;
 
   /**
    * 获取数据

@@ -2,16 +2,12 @@
 
 namespace p2cache {
 
-GeneralL1Cache::GeneralL1Cache() {}
-
-GeneralL1Cache::~GeneralL1Cache() {}
-
 Result GeneralL1Cache::Get(const std::string& key) {
   auto it = cache_.find(key);
   if (it == cache_.end()) return Result{nullptr, State::EMPTY};
 
-  auto now = std::time(nullptr);
-  if (now - it->second->createTime >= it->second->expired) {
+  auto now = std::chrono::system_clock::now();
+  if (now - it->second->createTime >= std::chrono::seconds(it->second->expired)) {
     cache_.erase(it);
     return Result{nullptr, State::EMPTY};
   }
@@ -27,7 +23,7 @@ void GeneralL1Cache::Set(const std::string& key, MessagePtr data, int expire) {
     auto info = std::make_shared<DataInfo>();
     info->data = data;
     info->expired = expire;
-    info->createTime = std::time(nullptr);
+    info->createTime = std::chrono::system_clock::now();
     cache_.emplace(key, info);
   }
 }
@@ -44,13 +40,13 @@ void GeneralL1Cache::RefreshExpired(const std::string& key) {
   auto it = cache_.find(key);
   if (it == cache_.end()) return;
 
-  it->second->createTime = std::time(nullptr);
+  it->second->createTime = std::chrono::system_clock::now();
 }
 
 void GeneralL1Cache::Heartbeat() {
-  auto now = std::time(nullptr);
+  auto now = std::chrono::system_clock::now();
   for (auto it = cache_.begin(); it != cache_.end(); ) {
-    if (now - it->second->createTime >= it->second->expired) {
+    if (now - it->second->createTime >= std::chrono::seconds(it->second->expired)) {
       it = cache_.erase(it);
     } else {
       ++it;

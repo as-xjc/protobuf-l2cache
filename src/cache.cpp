@@ -1,11 +1,13 @@
+#include <memory>
+
 #include <p2cache/cache.hpp>
-#include <boost/utility/string_view.hpp>
+#include <string_view>
 #include <google/protobuf/util/json_util.h>
 #include <p2cache/generall1cache.hpp>
 
 namespace {
-const char DATA_TYPE_JSON = 'J';
-const char DATA_TYPE_BINARY = 'B';
+constexpr char DATA_TYPE_JSON = 'J';
+constexpr char DATA_TYPE_BINARY = 'B';
 }
 
 namespace p2cache {
@@ -16,17 +18,15 @@ P2Cache::P2Cache(const Option& option, std::unique_ptr<L1CacheIf> l1, std::uniqu
 }
 
 P2Cache::P2Cache(const Option& option, std::unique_ptr<BackendIf> e) : option_(option) {
-  l1cache_.reset(new GeneralL1Cache());
+  l1cache_ = std::make_unique<GeneralL1Cache>();
   l1cache_->SetDefaultExpire(option_.defaultExpire);
   backend_ = std::move(e);
 }
 
 P2Cache::P2Cache(const p2cache::Option& option) : option_(option) {
-  l1cache_.reset(new GeneralL1Cache());
+  l1cache_ = std::make_unique<GeneralL1Cache>();
   l1cache_->SetDefaultExpire(option_.defaultExpire);
 }
-
-P2Cache::~P2Cache() {}
 
 std::string P2Cache::pbToString(MessagePtr& msg) {
   std::string cache;
@@ -55,7 +55,7 @@ std::string P2Cache::pbToString(MessagePtr& msg) {
 }
 
 Result P2Cache::stringToPb(const std::string& data) {
-  boost::string_view view(data);
+  std::string_view view(data);
   if (view.size() < 2) {
     return Result{nullptr, State::DATA_ERROR};
   }
@@ -76,7 +76,7 @@ Result P2Cache::stringToPb(const std::string& data) {
     return Result{nullptr, State::DATA_ERROR};
   }
 
-  auto type = view.substr(0, length).to_string();
+  std::string type(view.substr(0, length));
   view.remove_prefix(length);
   auto msgDes = google::protobuf::DescriptorPool::generated_pool()->FindMessageTypeByName(type);
   if (msgDes == nullptr) {
@@ -97,7 +97,7 @@ Result P2Cache::stringToPb(const std::string& data) {
       return Result{nullptr, State::PARSE_ERROR};
     }
   } else if (mode == DATA_TYPE_JSON) {
-    std::string json = view.to_string();
+    std::string json(view);
     google::protobuf::util::Status state = google::protobuf::util::JsonStringToMessage(json, ptr.get());
     if (state.ok()) {
       return Result{ptr, State::OK};

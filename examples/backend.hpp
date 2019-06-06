@@ -6,8 +6,8 @@
 
 class MapBack : public p2cache::BackendIf {
  public:
-  MapBack() {}
-  ~MapBack() {}
+  MapBack() = default;
+  ~MapBack() = default;
 
   std::string Get(const std::string& key) override {
     auto it = data_.find(key);

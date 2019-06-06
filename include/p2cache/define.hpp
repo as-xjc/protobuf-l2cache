@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <google/protobuf/message.h>
 
 namespace p2cache {
